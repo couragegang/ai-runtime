@@ -1,0 +1,26 @@
+micronaut:
+  application:
+    name: ai-runtime
+  server:
+    port: 8083
+    context-path: /v1/ai
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+
+endpoints:
+  health:
+    enabled: true
+    sensitive: false
+  metrics:
+    enabled: false
+  prometheus:
+    enabled: true
+    sensitive: false
+    path: metrics
+
+ai:
+  llm-provider: ${LLM_PROVIDER:stub}
+  openai-api-key: ${OPENAI_API_KEY:}
