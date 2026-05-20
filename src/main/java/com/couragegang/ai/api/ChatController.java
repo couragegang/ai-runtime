@@ -14,8 +14,9 @@ public class ChatController {
 
     @Post
     public ChatResponse chat(@Body @Valid ChatRequest request) {
+        var ws = request.workspaceId() != null ? request.workspaceId().toString() : "none";
         return new ChatResponse(
-                "Заглушка ai-runtime: LLM и вызовы MCP будут подключены позже. Сообщение: " + request.message(),
+                "Заглушка ai-runtime (workspace=" + ws + "): " + request.message(),
                 "stub"
         );
     }
