@@ -24,3 +24,7 @@ endpoints:
 ai:
   llm-provider: ${LLM_PROVIDER:stub}
   openai-api-key: ${OPENAI_API_KEY:}
+  policy-service:
+    enabled: ${POLICY_SERVICE_ENABLED:true}
+    base-url: ${POLICY_SERVICE_URL:http://localhost:8085/v1/policy}
+    internal-api-key: ${POLICY_INTERNAL_API_KEY:dev-internal-key}

@@ -2,6 +2,7 @@ package com.couragegang.ai.api;
 
 import com.couragegang.ai.api.dto.ChatRequest;
 import com.couragegang.ai.api.dto.ChatResponse;
+import com.couragegang.ai.service.ChatService;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
@@ -12,12 +13,14 @@ import jakarta.validation.Valid;
 @Validated
 public class ChatController {
 
+    private final ChatService chat;
+
+    public ChatController(ChatService chat) {
+        this.chat = chat;
+    }
+
     @Post
     public ChatResponse chat(@Body @Valid ChatRequest request) {
-        var ws = request.workspaceId() != null ? request.workspaceId().toString() : "none";
-        return new ChatResponse(
-                "Заглушка ai-runtime (workspace=" + ws + "): " + request.message(),
-                "stub"
-        );
+        return chat.chat(request);
     }
 }

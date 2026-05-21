@@ -1,7 +1,17 @@
 plugins {
     id("io.micronaut.application") version "4.5.4"
     id("com.gradleup.shadow") version "8.3.7"
+    jacoco
 }
+
+extra["jacocoCoverageExcludes"] = listOf(
+    "**/api/dto/**",
+    "**/repo/**",
+    "**/Application.class",
+    "**/integration/**",
+    "**/api/ChatController.class",
+)
+apply(from = rootDir.resolve("gradle/jacoco-coverage.gradle.kts"))
 
 version = "0.1.0-SNAPSHOT"
 group = "com.couragegang.ai"
@@ -34,6 +44,7 @@ dependencies {
     implementation("io.micronaut:micronaut-management")
     implementation("io.micronaut.micrometer:micronaut-micrometer-registry-prometheus")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("io.micronaut.validation:micronaut-validation")
     annotationProcessor("io.micronaut.validation:micronaut-validation-processor")
 
@@ -42,6 +53,9 @@ dependencies {
 
     testImplementation("io.micronaut.test:micronaut-test-junit5")
     testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
+    testImplementation("org.assertj:assertj-core:3.26.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
