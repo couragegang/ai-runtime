@@ -3,6 +3,8 @@ package com.couragegang.ai.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.couragegang.ai.api.dto.ChatRequest;
@@ -34,6 +36,22 @@ class ChatServiceTest {
     @Test
     void stubWhenNoTool() {
         var res = svc.chat(new ChatRequest(null, wsId, null, "hi", null, null));
+
+        assertThat(res.status()).isEqualTo("stub");
+        verify(policy, never()).evaluate(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void stubWhenToolWithoutOrg() {
+        var res = svc.chat(new ChatRequest(null, wsId, null, "hi", "notion", "write_page"));
+
+        assertThat(res.status()).isEqualTo("stub");
+        verify(policy, never()).evaluate(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void stubWhenBlankToolName() {
+        var res = svc.chat(new ChatRequest(orgId, wsId, null, "hi", "notion", "  "));
 
         assertThat(res.status()).isEqualTo("stub");
     }
@@ -78,5 +96,22 @@ class ChatServiceTest {
         var res = svc.chat(new ChatRequest(orgId, wsId, null, "x", null, "read_tool"));
 
         assertThat(res.status()).isEqualTo("stub");
+    }
+
+    @Test
+    void stubWhenPolicyReturnsEmpty() {
+        when(policy.evaluate(any(), any(), any(), any(), any())).thenReturn(Optional.empty());
+
+        var res = svc.chat(new ChatRequest(orgId, wsId, null, "msg", "slack", "write_x"));
+
+        assertThat(res.status()).isEqualTo("stub");
+        assertThat(res.reply()).contains("msg");
+    }
+
+    @Test
+    void stubUsesNoneWorkspaceWhenMissing() {
+        var res = svc.chat(new ChatRequest(null, null, null, "only message", null, null));
+
+        assertThat(res.reply()).contains("workspace=none");
     }
 }
