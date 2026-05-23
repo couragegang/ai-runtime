@@ -1,0 +1,175 @@
+openapi: 3.1.0
+info:
+  title: AI Runtime API
+  version: 0.1.0-draft
+  description: |
+    Чат, диалоги, agent runs. workspace_id обязателен.
+    x-erd: cursor-context/docs/erd-and-bounded-contexts.md#7-bc-agent-runtime-ai-runtime
+servers:
+  - url: http://localhost:8083/v1/ai
+    description: локально
+tags:
+  - name: chat
+  - name: conversations
+security:
+  - bearerAuth: []
+paths:
+  /chat:
+    post:
+      tags: [chat]
+      summary: Отправить сообщение (sync или SSE stream)
+      operationId: aiChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE stream (post-MVP)
+  /conversations:
+    get:
+      tags: [conversations]
+      summary: Ai Conversations List
+      operationId: aiConversationsList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+  /conversations/{conversationId}/messages:
+    get:
+      tags: [conversations]
+      summary: Ai Messages List
+      operationId: aiMessagesList
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+  /agent-runs/{runId}:
+    get:
+      tags: [chat]
+      summary: Ai Agent Run Get
+      operationId: aiAgentRunGet
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRun'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ChatRequest:
+      type: object
+      required: [workspaceId, message]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        conversationId:
+          type: string
+          format: uuid
+        message:
+          type: string
+    ChatResponse:
+      type: object
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        reply:
+          type: string
+        status:
+          type: string
+          enum: [completed, generating, awaiting_approval, error]
+    Conversation:
+      type: object
+      required: [id, workspaceId, title]
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspaceId:
+          type: string
+          format: uuid
+        title:
+          type: string
+    ConversationListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+    MessageListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    AgentRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [running, awaiting_approval, completed, failed, cancelled]
