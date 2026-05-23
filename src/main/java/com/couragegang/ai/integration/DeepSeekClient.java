@@ -1,6 +1,7 @@
 package com.couragegang.ai.integration;
 
 import com.couragegang.ai.config.AiProperties;
+import com.couragegang.ai.metrics.OutboundHttpMetrics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,11 +23,13 @@ public final class DeepSeekClient {
 
     private final AiProperties.DeepSeek config;
     private final HttpClient http;
+    private final OutboundHttpMetrics metrics;
     private final ObjectMapper json;
     private final String chatCompletionsUrl;
 
-    public DeepSeekClient(AiProperties properties) {
+    public DeepSeekClient(AiProperties properties, OutboundHttpMetrics metrics) {
         this.config = properties.getDeepseek();
+        this.metrics = metrics;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         this.json = new ObjectMapper();
         var base = config.getBaseUrl().endsWith("/") ? config.getBaseUrl().substring(0, config.getBaseUrl().length() - 1) : config.getBaseUrl();
@@ -46,7 +49,7 @@ public final class DeepSeekClient {
                             .header("Authorization", "Bearer " + config.getApiKey().trim())
                             .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                             .build();
-            var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            var response = metrics.send(http, request, "deepseek", "chat_completions");
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 LOG.warn("deepseek http {}: {}", response.statusCode(), truncate(response.body()));
                 throw new DeepSeekException("DeepSeek API returned HTTP " + response.statusCode());

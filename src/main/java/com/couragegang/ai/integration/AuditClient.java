@@ -1,5 +1,6 @@
 package com.couragegang.ai.integration;
 
+import com.couragegang.ai.metrics.OutboundHttpMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.context.annotation.Value;
@@ -24,16 +25,19 @@ public final class AuditClient {
     private final String ingestUrl;
     private final String internalKey;
     private final HttpClient http;
+    private final OutboundHttpMetrics metrics;
     private final ObjectMapper json;
 
     public AuditClient(
             @Value("${ai.audit-service.enabled:true}") boolean enabled,
             @Value("${ai.audit-service.base-url:http://localhost:8086/v1/audit}") String baseUrl,
-            @Value("${ai.audit-service.internal-api-key:dev-internal-key}") String internalKey) {
+            @Value("${ai.audit-service.internal-api-key:dev-internal-key}") String internalKey,
+            OutboundHttpMetrics metrics) {
         this.enabled = enabled;
         var base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.ingestUrl = base + "/internal/tool-events";
         this.internalKey = internalKey;
+        this.metrics = metrics;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
         this.json = new ObjectMapper();
     }
@@ -89,7 +93,7 @@ public final class AuditClient {
                                     HttpRequest.BodyPublishers.ofString(
                                             json.writeValueAsString(body), StandardCharsets.UTF_8))
                             .build();
-            http.send(request, HttpResponse.BodyHandlers.discarding());
+            metrics.send(http, request, "audit", "ingest_tool_event");
         } catch (Exception e) {
             LOG.debug("audit emit skipped: {}", e.toString());
         }

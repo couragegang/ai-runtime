@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.couragegang.ai.config.AiProperties;
 import com.couragegang.ai.integration.DeepSeekClient.DeepSeekException;
+import com.couragegang.ai.metrics.OutboundHttpMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.sun.net.httpserver.HttpServer;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -18,9 +20,15 @@ class DeepSeekClientTest {
     HttpServer server;
     String baseUrl;
     AiProperties props;
+    OutboundHttpMetrics metrics;
+
+    private DeepSeekClient client() {
+        return new DeepSeekClient(props, metrics);
+    }
 
     @BeforeEach
     void startServer() throws Exception {
+        metrics = new OutboundHttpMetrics(new SimpleMeterRegistry());
         props = new AiProperties();
         props.setLlmProvider("deepseek");
         props.getDeepseek().setApiKey("test-key");
@@ -55,7 +63,7 @@ class DeepSeekClientTest {
                     }
                 });
 
-        var reply = new DeepSeekClient(props).complete("user msg");
+        var reply = client().complete("user msg");
         assertThat(reply).isEqualTo("OK from model");
     }
 
@@ -75,13 +83,13 @@ class DeepSeekClientTest {
                     }
                 });
 
-        assertThat(new DeepSeekClient(props).complete("q")).isEqualTo("thought answer");
+        assertThat(client().complete("q")).isEqualTo("thought answer");
     }
 
     @Test
     void rejectsMissingApiKey() {
         props.getDeepseek().setApiKey("  ");
-        assertThatThrownBy(() -> new DeepSeekClient(props).complete("x"))
+        assertThatThrownBy(() -> client().complete("x"))
                 .isInstanceOf(DeepSeekException.class)
                 .hasMessageContaining("DEEPSEEK_API_KEY");
     }
@@ -89,7 +97,7 @@ class DeepSeekClientTest {
     @Test
     void httpErrorThrows() {
         server.createContext("/chat/completions", exchange -> exchange.sendResponseHeaders(429, -1));
-        assertThatThrownBy(() -> new DeepSeekClient(props).complete("x"))
+        assertThatThrownBy(() -> client().complete("x"))
                 .isInstanceOf(DeepSeekException.class)
                 .hasMessageContaining("429");
     }

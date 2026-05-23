@@ -1,5 +1,6 @@
 package com.couragegang.ai.integration;
 
+import com.couragegang.ai.metrics.OutboundHttpMetrics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Value;
@@ -25,16 +26,19 @@ public final class PolicyClient {
     private final String evaluateUrl;
     private final String internalKey;
     private final HttpClient http;
+    private final OutboundHttpMetrics metrics;
     private final ObjectMapper json;
 
     public PolicyClient(
             @Value("${ai.policy-service.enabled:true}") boolean enabled,
             @Value("${ai.policy-service.base-url:http://localhost:8085/v1/policy}") String baseUrl,
-            @Value("${ai.policy-service.internal-api-key:dev-internal-key}") String internalKey) {
+            @Value("${ai.policy-service.internal-api-key:dev-internal-key}") String internalKey,
+            OutboundHttpMetrics metrics) {
         this.enabled = enabled;
         var base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.evaluateUrl = base + "/internal/evaluate";
         this.internalKey = internalKey;
+        this.metrics = metrics;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
         this.json = new ObjectMapper();
     }
@@ -62,7 +66,7 @@ public final class PolicyClient {
                             .header("X-Policy-Internal-Key", internalKey)
                             .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                             .build();
-            var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            var response = metrics.send(http, request, "policy", "evaluate");
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 LOG.warn("policy evaluate failed: {} {}", response.statusCode(), response.body());
                 return Optional.empty();
