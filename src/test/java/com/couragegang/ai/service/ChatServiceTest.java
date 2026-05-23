@@ -90,12 +90,13 @@ class ChatServiceTest {
 
     @Test
     void defaultConnectorWhenMissing() {
-        when(policy.evaluate(any(), any(), any(), eq("notion"), any()))
+        when(policy.evaluate(eq(orgId), eq(wsId), eq("notion"), eq("fetch_page"), any()))
                 .thenReturn(Optional.of(new EvaluateResult("allow", null)));
 
-        var res = svc.chat(new ChatRequest(orgId, wsId, null, "x", null, "read_tool"));
+        var res = svc.chat(new ChatRequest(orgId, wsId, null, "x", null, "fetch_page"));
 
         assertThat(res.status()).isEqualTo("stub");
+        verify(policy).evaluate(orgId, wsId, "notion", "fetch_page", null);
     }
 
     @Test
