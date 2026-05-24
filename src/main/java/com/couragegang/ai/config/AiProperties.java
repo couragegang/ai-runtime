@@ -14,6 +14,37 @@ public class AiProperties {
 
     private AuditService auditService = new AuditService();
 
+    /** legacy | n8n */
+    private String orchestrator = "legacy";
+
+    private String internalApiKey = "dev-internal-key";
+
+    private N8n n8n = new N8n();
+
+    public String getOrchestrator() {
+        return orchestrator;
+    }
+
+    public void setOrchestrator(String orchestrator) {
+        this.orchestrator = orchestrator;
+    }
+
+    public String getInternalApiKey() {
+        return internalApiKey;
+    }
+
+    public void setInternalApiKey(String internalApiKey) {
+        this.internalApiKey = internalApiKey;
+    }
+
+    public N8n getN8n() {
+        return n8n;
+    }
+
+    public void setN8n(N8n n8n) {
+        this.n8n = n8n;
+    }
+
     public String getLlmProvider() {
         return llmProvider;
     }
@@ -72,7 +103,8 @@ public class AiProperties {
         }
 
         public void setBaseUrl(String baseUrl) {
-            this.baseUrl = baseUrl;
+            this.baseUrl =
+                    baseUrl == null || baseUrl.isBlank() ? "https://api.deepseek.com" : baseUrl.trim();
         }
 
         public String getModel() {
@@ -169,6 +201,38 @@ public class AiProperties {
 
         public void setInternalApiKey(String internalApiKey) {
             this.internalApiKey = internalApiKey;
+        }
+    }
+
+    @ConfigurationProperties("n8n")
+    public static class N8n {
+
+        private boolean enabled;
+        private String webhookUrl = "http://localhost:5678/webhook/chat-orchestrator";
+        private int waitTimeoutSeconds = 90;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getWebhookUrl() {
+            return webhookUrl;
+        }
+
+        public void setWebhookUrl(String webhookUrl) {
+            this.webhookUrl = webhookUrl;
+        }
+
+        public int getWaitTimeoutSeconds() {
+            return waitTimeoutSeconds;
+        }
+
+        public void setWaitTimeoutSeconds(int waitTimeoutSeconds) {
+            this.waitTimeoutSeconds = waitTimeoutSeconds;
         }
     }
 }

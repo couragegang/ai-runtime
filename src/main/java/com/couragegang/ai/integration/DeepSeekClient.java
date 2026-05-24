@@ -34,7 +34,14 @@ public final class DeepSeekClient {
         this.metrics = metrics;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         this.json = new ObjectMapper();
-        var base = config.getBaseUrl().endsWith("/") ? config.getBaseUrl().substring(0, config.getBaseUrl().length() - 1) : config.getBaseUrl();
+        var rawBase = config.getBaseUrl();
+        var base =
+                rawBase == null || rawBase.isBlank()
+                        ? "https://api.deepseek.com"
+                        : rawBase.trim();
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
         this.chatCompletionsUrl = base + "/chat/completions";
     }
 
