@@ -50,7 +50,7 @@ public final class N8nOrchestratorClient {
             var body = json.writeValueAsString(payload);
             var request =
                     HttpRequest.newBuilder(URI.create(webhookUrl))
-                            .timeout(Duration.ofSeconds(30))
+                            .timeout(Duration.ofSeconds(15))
                             .header("Content-Type", "application/json")
                             .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                             .build();
