@@ -125,6 +125,15 @@ public final class ConversationService {
         }
     }
 
+    public java.util.List<MessageView> listMessagesInternal(UUID conversationId, int limit) {
+        try {
+            var rows = messages.listByConversation(conversationId, limit);
+            return rows.stream().map(this::toMessageView).toList();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     public java.util.List<ChatTurn> historyForLlm(UUID conversationId, int maxMessages) {
         try {
             var rows = messages.listByConversation(conversationId);
@@ -192,7 +201,8 @@ public final class ConversationService {
                 row.status(),
                 row.pendingApprovalId(),
                 row.toolName(),
-                row.connectorKey());
+                row.connectorKey(),
+                row.createdAt() != null ? row.createdAt().toString() : null);
     }
 
     private static HttpStatusException notFound() {

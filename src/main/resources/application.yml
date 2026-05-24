@@ -47,6 +47,12 @@ flyway:
       locations: classpath:db/migration
 
 ai:
+  orchestrator: ${AI_ORCHESTRATOR:legacy}
+  internal-api-key: ${AI_INTERNAL_API_KEY:dev-internal-key}
+  n8n:
+    enabled: ${AI_N8N_ENABLED:false}
+    webhook-url: ${N8N_WEBHOOK_URL:http://localhost:5678/webhook/chat-orchestrator}
+    wait-timeout-seconds: ${AI_N8N_WAIT_TIMEOUT_SECONDS:90}
   llm-provider: ${LLM_PROVIDER:stub}
   deepseek:
     api-key: ${DEEPSEEK_API_KEY:}

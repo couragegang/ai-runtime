@@ -48,6 +48,40 @@ public final class MessageRepository {
         }
     }
 
+    public List<MessageRow> listByConversation(UUID conversationId, int limit) throws SQLException {
+        try (var c = dataSource.getConnection();
+                var ps = c.prepareStatement(
+                        """
+                        SELECT id, conversation_id, role, content, status, pending_approval_id,
+                               tool_name, connector_key, created_at
+                        FROM messages
+                        WHERE conversation_id = ?
+                        ORDER BY created_at DESC
+                        LIMIT ?
+                        """)) {
+            ps.setObject(1, conversationId);
+            ps.setInt(2, limit);
+            var out = new ArrayList<MessageRow>();
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(
+                            new MessageRow(
+                                    rs.getObject("id", UUID.class),
+                                    rs.getObject("conversation_id", UUID.class),
+                                    rs.getString("role"),
+                                    rs.getString("content"),
+                                    rs.getString("status"),
+                                    rs.getObject("pending_approval_id", UUID.class),
+                                    rs.getString("tool_name"),
+                                    rs.getString("connector_key"),
+                                    rs.getTimestamp("created_at").toInstant()));
+                }
+            }
+            out.sort((a, b) -> a.createdAt().compareTo(b.createdAt()));
+            return out;
+        }
+    }
+
     public List<MessageRow> listByConversation(UUID conversationId) throws SQLException {
         try (var c = dataSource.getConnection();
                 var ps = c.prepareStatement(

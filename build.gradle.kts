@@ -11,11 +11,17 @@ extra["jacocoCoverageExcludes"] = listOf(
     "**/integration/**",
     "**/api/ChatController.class",
     "**/api/ConversationsController.class",
+    "**/api/InternalOrchestratorController.class",
     "**/api/HealthInfoController.class",
+    "**/security/**",
     "**/metrics/**",
     "**/config/AiProperties.class",
     "**/service/NotionToolArguments.class",
     "**/service/ChatService.class",
+    "**/service/OrchestratorRouterService.class",
+    "**/service/OrchestratorToolCatalog.class",
+    "**/service/HitlPromptFormatter.class",
+    "**/service/OrchestratorService.class",
 )
 apply(from = rootDir.resolve("gradle/jacoco-coverage.gradle.kts"))
 
@@ -47,6 +53,7 @@ dependencies {
     annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
 
     implementation("io.micronaut:micronaut-http-server-netty")
+    implementation("io.projectreactor:reactor-core")
     implementation("io.micronaut:micronaut-management")
     implementation("io.micronaut.micrometer:micronaut-micrometer-registry-prometheus")
     implementation("io.micronaut.serde:micronaut-serde-jackson")

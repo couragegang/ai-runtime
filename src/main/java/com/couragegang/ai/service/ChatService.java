@@ -27,6 +27,7 @@ public final class ChatService {
     private final McpToolClient mcpTool;
     private final McpInstallationsClient mcpInstallations;
     private final ToolIntentResolver toolIntent;
+    private final OrchestratorService orchestrator;
 
     public ChatService(
             PolicyClient policy,
@@ -35,7 +36,8 @@ public final class ChatService {
             ConversationService conversations,
             McpToolClient mcpTool,
             McpInstallationsClient mcpInstallations,
-            ToolIntentResolver toolIntent) {
+            ToolIntentResolver toolIntent,
+            OrchestratorService orchestrator) {
         this.policy = policy;
         this.llm = llm;
         this.audit = audit;
@@ -43,6 +45,7 @@ public final class ChatService {
         this.mcpTool = mcpTool;
         this.mcpInstallations = mcpInstallations;
         this.toolIntent = toolIntent;
+        this.orchestrator = orchestrator;
     }
 
     public ChatResponse chat(ChatRequest request) {
@@ -60,6 +63,10 @@ public final class ChatService {
 
         if (request.approvedPendingApprovalId() != null) {
             return executeApprovedTool(request, conversationId);
+        }
+
+        if (orchestrator.useN8n()) {
+            return orchestrator.chatViaN8n(request);
         }
 
         var needsTitle = conversations.countMessages(conversationId) == 0;

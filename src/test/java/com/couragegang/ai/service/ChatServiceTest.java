@@ -42,6 +42,7 @@ class ChatServiceTest {
     @Mock McpToolClient mcpTool;
     @Mock McpInstallationsClient mcpInstallations;
     @Mock ToolIntentResolver toolIntent;
+    @Mock OrchestratorService orchestrator;
 
     ChatService svc;
     UUID orgId = UUID.randomUUID();
@@ -50,7 +51,8 @@ class ChatServiceTest {
 
     @BeforeEach
     void setUp() {
-        svc = new ChatService(policy, llm, audit, conversations, mcpTool, mcpInstallations, toolIntent);
+        svc = new ChatService(policy, llm, audit, conversations, mcpTool, mcpInstallations, toolIntent, orchestrator);
+        lenient().when(orchestrator.useN8n()).thenReturn(false);
         lenient().when(conversations.ensureConversation(any())).thenReturn(conversationId);
         lenient().when(mcpInstallations.activeConnectorKeys(any())).thenReturn(Set.of());
         lenient().when(toolIntent.resolve(any(), any())).thenReturn(Optional.empty());

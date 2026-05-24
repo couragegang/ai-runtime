@@ -38,7 +38,8 @@ public final class ConversationDtos {
             @Nullable String status,
             @Nullable UUID pendingApprovalId,
             @Nullable String toolName,
-            @Nullable String connectorKey) {}
+            @Nullable String connectorKey,
+            @Nullable String createdAt) {}
 
     @Serdeable
     public record MessageListResponse(List<MessageView> items) {}
