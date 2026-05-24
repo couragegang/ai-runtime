@@ -12,7 +12,7 @@ public final class HealthInfoController {
         return Map.of(
                 "service", "ai-runtime",
                 "health", "/v1/ai/health",
-                "chat", "/v1/ai/chat"
-        );
+                "chat", "/v1/ai/chat",
+                "conversations", "/v1/ai/conversations");
     }
 }

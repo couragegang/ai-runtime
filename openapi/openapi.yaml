@@ -48,6 +48,11 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: include_archived
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: OK
@@ -55,6 +60,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationListResponse'
+    post:
+      tags: [conversations]
+      summary: Создать диалог
+      operationId: aiConversationsCreate
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+  /conversations/{conversationId}:
+    patch:
+      tags: [conversations]
+      summary: Архивировать диалог
+      operationId: aiConversationsPatch
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [archived]
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [conversations]
+      summary: Удалить диалог
+      operationId: aiConversationsDelete
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
   /conversations/{conversationId}/messages:
     get:
       tags: [conversations]
@@ -137,6 +220,9 @@ components:
           format: uuid
         title:
           type: string
+        status:
+          type: string
+          enum: [active, archived]
     ConversationListResponse:
       type: object
       required: [items]
@@ -155,6 +241,15 @@ components:
           type: string
           enum: [user, assistant, system]
         content:
+          type: string
+        status:
+          type: string
+        pendingApprovalId:
+          type: string
+          format: uuid
+        toolName:
+          type: string
+        connectorKey:
           type: string
     MessageListResponse:
       type: object

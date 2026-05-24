@@ -83,5 +83,40 @@ public final class PolicyClient {
         }
     }
 
+    public Optional<PendingApprovalInfo> getPendingApproval(UUID pendingId) {
+        if (!enabled || pendingId == null) {
+            return Optional.empty();
+        }
+        try {
+            var base = evaluateUrl.replace("/internal/evaluate", "");
+            var request =
+                    HttpRequest.newBuilder(URI.create(base + "/pending-approvals/" + pendingId))
+                            .timeout(Duration.ofSeconds(10))
+                            .GET()
+                            .build();
+            var response = metrics.send(http, request, "policy", "get_pending");
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                LOG.warn("policy get pending failed: {} {}", response.statusCode(), response.body());
+                return Optional.empty();
+            }
+            JsonNode node = json.readTree(response.body());
+            var toolName = node.path("toolName").asText(null);
+            if (toolName == null || toolName.isBlank()) {
+                return Optional.empty();
+            }
+            return Optional.of(
+                    new PendingApprovalInfo(
+                            pendingId,
+                            node.path("status").asText("pending"),
+                            toolName,
+                            node.path("workspaceId").asText(null)));
+        } catch (Exception e) {
+            LOG.warn("policy get pending error: {}", e.toString());
+            return Optional.empty();
+        }
+    }
+
     public record EvaluateResult(String decision, UUID pendingApprovalId) {}
+
+    public record PendingApprovalInfo(UUID id, String status, String toolName, String workspaceId) {}
 }

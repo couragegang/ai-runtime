@@ -10,6 +10,9 @@ public record ChatRequest(
         @Nullable UUID orgId,
         @Nullable UUID workspaceId,
         @Nullable UUID userId,
+        @Nullable UUID conversationId,
         @NotBlank String message,
         @Nullable String connectorKey,
-        @Nullable String toolName) {}
+        @Nullable String toolName,
+        /** После approve: выполнить инструмент без повторного запроса подтверждения. */
+        @Nullable UUID approvedPendingApprovalId) {}

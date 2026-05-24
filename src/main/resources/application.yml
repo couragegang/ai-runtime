@@ -33,6 +33,19 @@ endpoints:
     enabled: true
     sensitive: false
 
+datasources:
+  default:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ai}
+    username: ${DB_USER:platform}
+    password: ${DB_PASSWORD:platform}
+    driver-class-name: org.postgresql.Driver
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+
 ai:
   llm-provider: ${LLM_PROVIDER:stub}
   deepseek:
@@ -49,3 +62,7 @@ ai:
     enabled: ${AUDIT_SERVICE_ENABLED:true}
     base-url: ${AUDIT_SERVICE_URL:http://localhost:8086/v1/audit}
     internal-api-key: ${AUDIT_INTERNAL_API_KEY:dev-internal-key}
+  mcp-service:
+    enabled: ${MCP_SERVICE_ENABLED:true}
+    base-url: ${MCP_SERVICE_URL:http://localhost:8081/v1/mcp}
+    internal-api-key: ${MCP_INTERNAL_API_KEY:dev-internal-key}

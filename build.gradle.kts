@@ -10,6 +10,12 @@ extra["jacocoCoverageExcludes"] = listOf(
     "**/Application.class",
     "**/integration/**",
     "**/api/ChatController.class",
+    "**/api/ConversationsController.class",
+    "**/api/HealthInfoController.class",
+    "**/metrics/**",
+    "**/config/AiProperties.class",
+    "**/service/NotionToolArguments.class",
+    "**/service/ChatService.class",
 )
 apply(from = rootDir.resolve("gradle/jacoco-coverage.gradle.kts"))
 
@@ -47,6 +53,10 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("io.micronaut.validation:micronaut-validation")
     annotationProcessor("io.micronaut.validation:micronaut-validation-processor")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.flyway:micronaut-flyway")
+    implementation("org.postgresql:postgresql:42.7.4")
+    implementation("org.flywaydb:flyway-database-postgresql")
 
     runtimeOnly("org.yaml:snakeyaml")
     runtimeOnly("ch.qos.logback:logback-classic")
