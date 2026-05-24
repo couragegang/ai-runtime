@@ -50,15 +50,25 @@ public final class N8nOrchestratorClient {
             var body = json.writeValueAsString(payload);
             var request =
                     HttpRequest.newBuilder(URI.create(webhookUrl))
-                            .timeout(Duration.ofSeconds(15))
+                            .timeout(Duration.ofSeconds(10))
                             .header("Content-Type", "application/json")
                             .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                             .build();
-            var response = metrics.send(http, request, "n8n", "chat_orchestrator");
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                return true;
-            }
-            LOG.warn("n8n webhook failed: status={} body={}", response.statusCode(), response.body());
+            // Не ждём конца run: webhook onReceived отвечает сразу; результат — callback в ai-runtime.
+            http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                    .whenComplete(
+                            (response, err) -> {
+                                if (err != null) {
+                                    LOG.warn("n8n webhook async error: {}", err.toString());
+                                    return;
+                                }
+                                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                                    LOG.debug("n8n webhook accepted status={}", response.statusCode());
+                                } else {
+                                    LOG.warn("n8n webhook failed: status={}", response.statusCode());
+                                }
+                            });
+            return true;
         } catch (Exception e) {
             LOG.warn("n8n webhook error: {}", e.toString());
         }
