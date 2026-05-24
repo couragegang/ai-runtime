@@ -33,7 +33,10 @@ public final class N8nOrchestratorClient {
         this.webhookUrl = webhookUrl;
         this.metrics = metrics;
         this.json = new ObjectMapper();
-        this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        this.http =
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(15))
+                        .build();
         LOG.info("n8n orchestrator client enabled={} webhookUrl={}", enabled, webhookUrl);
     }
 
@@ -50,25 +53,18 @@ public final class N8nOrchestratorClient {
             var body = json.writeValueAsString(payload);
             var request =
                     HttpRequest.newBuilder(URI.create(webhookUrl))
-                            .timeout(Duration.ofSeconds(10))
+                            // onReceived отвечает сразу; 30s — запас на cold start n8n после entrypoint import
+                            .timeout(Duration.ofSeconds(30))
                             .header("Content-Type", "application/json")
                             .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                             .build();
-            // Не ждём конца run: webhook onReceived отвечает сразу; результат — callback в ai-runtime.
-            http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-                    .whenComplete(
-                            (response, err) -> {
-                                if (err != null) {
-                                    LOG.warn("n8n webhook async error: {}", err.toString());
-                                    return;
-                                }
-                                if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                                    LOG.debug("n8n webhook accepted status={}", response.statusCode());
-                                } else {
-                                    LOG.warn("n8n webhook failed: status={}", response.statusCode());
-                                }
-                            });
-            return true;
+            var response = http.send(request, HttpResponse.BodyHandlers.discarding());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                LOG.debug("n8n webhook accepted status={}", response.statusCode());
+                return true;
+            }
+            LOG.warn("n8n webhook failed: status={} url={}", response.statusCode(), webhookUrl);
+            return false;
         } catch (Exception e) {
             LOG.warn("n8n webhook error: {}", e.toString());
         }
