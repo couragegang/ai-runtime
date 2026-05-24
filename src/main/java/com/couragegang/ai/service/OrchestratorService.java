@@ -14,13 +14,18 @@ import com.couragegang.ai.api.dto.OrchestratorDtos.OrchestratorStartRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.RunCompleteRequest;
 import com.couragegang.ai.integration.N8nOrchestratorClient;
 import io.micronaut.context.annotation.Value;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public final class OrchestratorService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(OrchestratorService.class);
 
     private final String orchestratorMode;
     private final int waitTimeoutSeconds;
@@ -48,6 +53,15 @@ public final class OrchestratorService {
         this.llm = llm;
         this.router = router;
         this.toolCatalog = toolCatalog;
+    }
+
+    @PostConstruct
+    void logOrchestratorConfig() {
+        LOG.info(
+                "orchestrator mode={} n8nClientEnabled={} useN8n={}",
+                orchestratorMode,
+                n8n.isEnabled(),
+                useN8n());
     }
 
     public boolean useN8n() {

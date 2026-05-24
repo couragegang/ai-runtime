@@ -35,6 +35,7 @@ public final class N8nOrchestratorClient {
         this.metrics = metrics;
         this.json = json;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        LOG.info("n8n orchestrator client enabled={} webhookUrl={}", enabled, webhookUrl);
     }
 
     public boolean isEnabled() {
@@ -43,6 +44,7 @@ public final class N8nOrchestratorClient {
 
     public boolean triggerRun(OrchestratorStartRequest payload) {
         if (!enabled) {
+            LOG.debug("n8n webhook skipped: ai.n8n.enabled=false");
             return false;
         }
         try {
