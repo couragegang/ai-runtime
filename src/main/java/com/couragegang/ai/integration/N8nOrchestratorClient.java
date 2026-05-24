@@ -28,12 +28,11 @@ public final class N8nOrchestratorClient {
     public N8nOrchestratorClient(
             @Value("${ai.n8n.enabled:false}") boolean enabled,
             @Value("${ai.n8n.webhook-url:http://localhost:5678/webhook/chat-orchestrator}") String webhookUrl,
-            OutboundHttpMetrics metrics,
-            ObjectMapper json) {
+            OutboundHttpMetrics metrics) {
         this.enabled = enabled;
         this.webhookUrl = webhookUrl;
         this.metrics = metrics;
-        this.json = json;
+        this.json = new ObjectMapper();
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         LOG.info("n8n orchestrator client enabled={} webhookUrl={}", enabled, webhookUrl);
     }
