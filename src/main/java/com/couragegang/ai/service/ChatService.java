@@ -61,12 +61,11 @@ public final class ChatService {
                         request.message());
         var conversationId = conversations.ensureConversation(ctx);
 
-        if (request.approvedPendingApprovalId() != null) {
-            return executeApprovedTool(request, conversationId);
-        }
-
         if (orchestrator.useN8n()) {
             return orchestrator.chatViaN8n(request);
+        }
+        if (request.approvedPendingApprovalId() != null) {
+            return executeApprovedTool(request, conversationId);
         }
 
         var needsTitle = conversations.countMessages(conversationId) == 0;

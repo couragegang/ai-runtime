@@ -122,7 +122,9 @@ public final class OrchestratorService {
         }
 
         try {
+            LOG.debug("n8n run {} awaiting callback up to {}s", runId, waitTimeoutSeconds);
             var complete = runs.await(runId, waitTimeoutSeconds);
+            LOG.debug("n8n run {} completed with status={}", runId, complete.status());
             return new ChatResponse(
                     conversationId,
                     complete.reply(),
@@ -132,6 +134,7 @@ public final class OrchestratorService {
                     complete.toolName(),
                     complete.connectorKey());
         } catch (TimeoutException e) {
+            LOG.warn("n8n run {} timed out after {}s (callback not received in time)", runId, waitTimeoutSeconds);
             runs.discard(runId);
             return new ChatResponse(
                     conversationId,
@@ -186,6 +189,7 @@ public final class OrchestratorService {
 
     public void completeRun(UUID runId, RunCompleteRequest body) {
         var conversationId = runs.conversationIdFor(runId);
+        runs.complete(runId, body);
         conversations.appendAssistantMessage(
                 conversationId,
                 body.reply(),
@@ -193,7 +197,7 @@ public final class OrchestratorService {
                 body.pendingApprovalId(),
                 body.toolName(),
                 body.connectorKey());
-        runs.complete(runId, body);
+        LOG.debug("n8n run {} callback applied status={}", runId, body.status());
     }
 
     private InternalMessageView toInternal(MessageView view) {

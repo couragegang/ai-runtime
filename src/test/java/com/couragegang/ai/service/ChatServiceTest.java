@@ -156,6 +156,32 @@ class ChatServiceTest {
     }
 
     @Test
+    void approvedResumeUsesN8nOrchestratorWhenEnabled() {
+        var pendingId = UUID.randomUUID();
+        when(orchestrator.useN8n()).thenReturn(true);
+        when(orchestrator.chatViaN8n(any()))
+                .thenReturn(new com.couragegang.ai.api.dto.ChatResponse(
+                        conversationId, "n8n resume ok", "completed", null, null, "notion_write_page", "notion"));
+
+        var req =
+                new ChatRequest(
+                        orgId,
+                        wsId,
+                        UUID.randomUUID(),
+                        conversationId,
+                        "подтверждаю",
+                        "notion",
+                        "notion_write_page",
+                        pendingId);
+        var res = svc.chat(req);
+
+        assertThat(res.reply()).isEqualTo("n8n resume ok");
+        verify(orchestrator).chatViaN8n(req);
+        verify(mcpTool, never()).invoke(any(), any(), any(), any());
+        verify(policy, never()).getPendingApproval(any());
+    }
+
+    @Test
     void llmReceivesMcpContextWhenConnectorsInstalled() {
         when(mcpInstallations.activeConnectorKeys(wsId)).thenReturn(Set.of("notion"));
         when(llm.completeWithHistory(any(), eq(wsId.toString()), contains("notion")))
