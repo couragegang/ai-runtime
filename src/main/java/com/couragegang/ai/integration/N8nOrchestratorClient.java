@@ -59,7 +59,6 @@ public final class N8nOrchestratorClient {
                             // onReceived отвечает сразу; 30s — запас на cold start n8n после entrypoint import
                             .timeout(Duration.ofSeconds(30))
                             .header("Content-Type", "application/json")
-                            .header("Connection", "close")
                             .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                             .build();
 
