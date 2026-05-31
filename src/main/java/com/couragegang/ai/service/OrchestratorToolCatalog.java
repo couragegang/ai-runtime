@@ -45,7 +45,7 @@ public final class OrchestratorToolCatalog {
                                 new ConnectorCapability(
                                         "trello",
                                         "Trello",
-                                        "Карточки и комментарии на досках Trello (mock до mcp-trello; подставляет данные из priorResults)."));
+                                        "Карточки, колонки и комментарии на досках Trello через mcp-trello."));
                 default -> {}
             }
         }
@@ -135,6 +135,54 @@ public final class OrchestratorToolCatalog {
                                     "trello_add_comment",
                                     "Комментарий к карточке",
                                     "Добавляет комментарий к существующей карточке (name/card_id, desc).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_list_lists",
+                                    "Список колонок",
+                                    "Показывает колонки (списки) на доске Trello (board_name).",
+                                    false));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_create_list",
+                                    "Создать колонку",
+                                    "Создаёт колонку на доске (board_name, list_name).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_rename_list",
+                                    "Переименовать колонку",
+                                    "Переименовывает колонку (board_name, list_name, new_name).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_archive_list",
+                                    "Архивировать колонку",
+                                    "Архивирует колонку на доске (board_name, list_name).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_move_card",
+                                    "Переместить карточку",
+                                    "Перемещает карточку в другую колонку (name/card_id, list_name, board_name).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_delete_card",
+                                    "Удалить карточку",
+                                    "Удаляет карточку из Trello (name/card_id).",
                                     true));
                 }
                 default -> {}

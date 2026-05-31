@@ -33,7 +33,16 @@ class OrchestratorToolCatalogTest {
     void toolsForConnectorsIncludesTrello() {
         var all = catalog.toolsForConnectors(Set.of("trello"));
         assertThat(all).extracting(OrchestratorToolCatalog.ToolDefinition::toolName)
-                .contains("trello_search_cards", "trello_create_card", "trello_add_comment");
+                .contains(
+                        "trello_search_cards",
+                        "trello_create_card",
+                        "trello_add_comment",
+                        "trello_list_lists",
+                        "trello_create_list",
+                        "trello_rename_list",
+                        "trello_archive_list",
+                        "trello_move_card",
+                        "trello_delete_card");
         assertThat(catalog.connectorCapabilities(Set.of("trello")))
                 .extracting(OrchestratorToolCatalog.ConnectorCapability::connectorKey)
                 .containsExactly("trello");
