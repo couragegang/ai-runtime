@@ -38,6 +38,12 @@ class NotionEditPreviewEnricherTest {
     }
 
     @Test
+    void returnsBaseWhenToolNameNull() {
+        var args = Map.<String, Object>of("find_text", "a", "new_text", "b");
+        assertThat(enricher.enrichForHitl(wsId, null, args)).isEqualTo(args);
+    }
+
+    @Test
     void returnsBaseWhenPreviewFieldsAlreadyPresent() {
         var base =
                 Map.<String, Object>of(

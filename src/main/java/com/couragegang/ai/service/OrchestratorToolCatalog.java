@@ -9,6 +9,9 @@ import java.util.Set;
 @Singleton
 public final class OrchestratorToolCatalog {
 
+    /** Connectors with L2 n8n workflow — L1 router must not plan toolName for these. */
+    private static final Set<String> CONNECTOR_WORKFLOW_KEYS = Set.of("notion", "trello");
+
     public record ToolDefinition(
             String connectorKey,
             String connectorDisplayName,
@@ -17,6 +20,53 @@ public final class OrchestratorToolCatalog {
             String description,
             boolean writeLike) {}
 
+    /** L1 router: connector-level capabilities (delegates tool choice to connector workflow). */
+    public record ConnectorCapability(
+            String connectorKey, String displayName, String description) {}
+
+    public List<ConnectorCapability> connectorCapabilities(Set<String> connectorKeys) {
+        var out = new ArrayList<ConnectorCapability>();
+        if (connectorKeys == null) {
+            return out;
+        }
+        for (var key : connectorKeys) {
+            if (key == null || key.isBlank()) {
+                continue;
+            }
+            switch (key.trim().toLowerCase(Locale.ROOT)) {
+                case "notion" ->
+                        out.add(
+                                new ConnectorCapability(
+                                        "notion",
+                                        "Notion",
+                                        "Поиск, запись и правка страниц в подключённом Notion workspace (внутренняя цепочка search/write/edit)."));
+                case "trello" ->
+                        out.add(
+                                new ConnectorCapability(
+                                        "trello",
+                                        "Trello",
+                                        "Карточки и комментарии на досках Trello (mock до mcp-trello; подставляет данные из priorResults)."));
+                default -> {}
+            }
+        }
+        return out;
+    }
+
+    public static boolean hasConnectorWorkflow(String connectorKey) {
+        if (connectorKey == null || connectorKey.isBlank()) {
+            return false;
+        }
+        return CONNECTOR_WORKFLOW_KEYS.contains(connectorKey.trim().toLowerCase(Locale.ROOT));
+    }
+
+    /** Tools exposed to L1 LLM router (empty for delegated connectors). */
+    public List<ToolDefinition> toolsForRouter(Set<String> connectorKeys) {
+        return toolsForConnectors(connectorKeys).stream()
+                .filter(t -> !hasConnectorWorkflow(t.connectorKey()))
+                .toList();
+    }
+
+    /** Full tool list for HITL labels and policy (L2/L3). */
     public List<ToolDefinition> toolsForConnectors(Set<String> connectorKeys) {
         var out = new ArrayList<ToolDefinition>();
         if (connectorKeys == null) {
@@ -51,6 +101,40 @@ public final class OrchestratorToolCatalog {
                                     "notion_edit_block",
                                     "Правка блока",
                                     "Заменяет фразу в существующем текстовом блоке страницы (find_text → new_text; page_title/page_url).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "notion",
+                                    "Notion",
+                                    "notion_delete_page",
+                                    "Удаление страницы",
+                                    "Перемещает страницу в корзину Notion (по page_title/page_url/page_id; требует подтверждения).",
+                                    true));
+                }
+                case "trello" -> {
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_search_cards",
+                                    "Поиск карточек",
+                                    "Ищет карточки на доске Trello по запросу (board_name, query).",
+                                    false));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_create_card",
+                                    "Создать карточку",
+                                    "Создаёт карточку на доске (board_name, list_name, name, desc).",
+                                    true));
+                    out.add(
+                            new ToolDefinition(
+                                    "trello",
+                                    "Trello",
+                                    "trello_add_comment",
+                                    "Комментарий к карточке",
+                                    "Добавляет комментарий к существующей карточке (name/card_id, desc).",
                                     true));
                 }
                 default -> {}

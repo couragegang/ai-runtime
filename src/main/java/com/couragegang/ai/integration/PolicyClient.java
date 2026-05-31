@@ -107,10 +107,8 @@ public final class PolicyClient {
                 return Optional.empty();
             }
             JsonNode node = json.readTree(response.body());
+            var approvalKind = node.path("approvalKind").asText("tool");
             var toolName = node.path("toolName").asText(null);
-            if (toolName == null || toolName.isBlank()) {
-                return Optional.empty();
-            }
             Map<String, Object> toolArguments = Map.of();
             var argsNode = node.path("toolArguments");
             if (argsNode.isObject()) {
@@ -120,13 +118,30 @@ public final class PolicyClient {
                     toolArguments = parsed;
                 }
             }
+            java.util.List<Map<String, Object>> plannedSteps = java.util.List.of();
+            var stepsNode = node.path("plannedSteps");
+            if (stepsNode.isArray()) {
+                @SuppressWarnings("unchecked")
+                var parsedSteps =
+                        (java.util.List<Map<String, Object>>)
+                                json.convertValue(
+                                        stepsNode,
+                                        json.getTypeFactory()
+                                                .constructCollectionType(
+                                                        java.util.List.class, Map.class));
+                if (parsedSteps != null) {
+                    plannedSteps = parsedSteps;
+                }
+            }
             return Optional.of(
                     new PendingApprovalInfo(
                             pendingId,
                             node.path("status").asText("pending"),
+                            approvalKind,
                             toolName,
                             node.path("workspaceId").asText(null),
-                            toolArguments));
+                            toolArguments,
+                            plannedSteps));
         } catch (Exception e) {
             LOG.warn("policy get pending error: {}", e.toString());
             return Optional.empty();
@@ -136,5 +151,17 @@ public final class PolicyClient {
     public record EvaluateResult(String decision, UUID pendingApprovalId) {}
 
     public record PendingApprovalInfo(
-            UUID id, String status, String toolName, String workspaceId, Map<String, Object> toolArguments) {}
+            UUID id,
+            String status,
+            String approvalKind,
+            String toolName,
+            String workspaceId,
+            Map<String, Object> toolArguments,
+            java.util.List<Map<String, Object>> plannedSteps) {
+
+        public boolean isPlanApproval() {
+            return "plan".equalsIgnoreCase(approvalKind)
+                    || "connector_plan".equals(toolName);
+        }
+    }
 }

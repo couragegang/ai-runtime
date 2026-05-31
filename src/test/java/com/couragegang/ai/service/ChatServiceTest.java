@@ -41,7 +41,6 @@ class ChatServiceTest {
     @Mock ConversationService conversations;
     @Mock McpToolClient mcpTool;
     @Mock McpInstallationsClient mcpInstallations;
-    @Mock ToolIntentResolver toolIntent;
     @Mock OrchestratorService orchestrator;
 
     ChatService svc;
@@ -51,11 +50,10 @@ class ChatServiceTest {
 
     @BeforeEach
     void setUp() {
-        svc = new ChatService(policy, llm, audit, conversations, mcpTool, mcpInstallations, toolIntent, orchestrator);
+        svc = new ChatService(policy, llm, audit, conversations, mcpTool, mcpInstallations, orchestrator);
         lenient().when(orchestrator.useN8n()).thenReturn(false);
         lenient().when(conversations.ensureConversation(any())).thenReturn(conversationId);
         lenient().when(mcpInstallations.activeConnectorKeys(any())).thenReturn(Set.of());
-        lenient().when(toolIntent.resolve(any(), any())).thenReturn(Optional.empty());
         lenient().when(mcpTool.toolArguments(any())).thenAnswer(inv -> Map.of("content", inv.getArgument(0)));
         lenient().when(mcpTool.invoke(any(), any(), any(), any())).thenReturn(Optional.empty());
         lenient().when(conversations.countMessages(any())).thenReturn(1);
@@ -137,9 +135,11 @@ class ChatServiceTest {
                                 new PendingApprovalInfo(
                                         pendingId,
                                         "approved",
+                                        "tool",
                                         "notion_write_page",
                                         wsId.toString(),
-                                        storedArgs)));
+                                        storedArgs,
+                                        List.of())));
         when(conversations.historyForLlm(conversationId, 30))
                 .thenReturn(
                         List.of(
@@ -169,7 +169,13 @@ class ChatServiceTest {
                 .thenReturn(
                         Optional.of(
                                 new PendingApprovalInfo(
-                                        pendingId, "approved", "notion_write_page", wsId.toString(), Map.of())));
+                                        pendingId,
+                                        "approved",
+                                        "tool",
+                                        "notion_write_page",
+                                        wsId.toString(),
+                                        Map.of(),
+                                        List.of())));
         when(conversations.historyForLlm(conversationId, 30))
                 .thenReturn(
                         List.of(

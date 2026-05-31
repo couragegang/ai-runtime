@@ -15,10 +15,6 @@ import com.couragegang.ai.api.dto.OrchestratorDtos.RunCompleteRequest;
 import com.couragegang.ai.service.OrchestratorToolCatalog.ToolDefinition;
 import com.couragegang.ai.integration.N8nOrchestratorClient;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,8 +33,6 @@ class OrchestratorServiceTest {
 
     OrchestratorRunRegistry runs;
     OrchestratorService svc;
-    ExecutorService executor;
-
     UUID wsId = UUID.randomUUID();
     UUID conversationId = UUID.randomUUID();
 
@@ -48,13 +42,7 @@ class OrchestratorServiceTest {
         svc =
                 new OrchestratorService(
                         "n8n", 5, n8n, conversations, runs, llm, router, toolCatalog, notionEditPreview);
-        executor = Executors.newSingleThreadExecutor();
         lenient().when(n8n.isEnabled()).thenReturn(true);
-    }
-
-    @AfterEach
-    void tearDown() {
-        executor.shutdownNow();
     }
 
     @Test
@@ -70,12 +58,10 @@ class OrchestratorServiceTest {
         when(n8n.triggerRun(any())).thenAnswer(
                 inv -> {
                     var payload = inv.getArgument(0, com.couragegang.ai.api.dto.OrchestratorDtos.OrchestratorStartRequest.class);
-                    executor.submit(
-                            () ->
-                                    svc.completeRun(
-                                            payload.runId(),
-                                            new RunCompleteRequest(
-                                                    "completed", "from n8n", null, null, null)));
+                    // Complete synchronously: async callback races chatViaN8n return in CI.
+                    svc.completeRun(
+                            payload.runId(),
+                            new RunCompleteRequest("completed", "from n8n", null, null, null, null));
                     return true;
                 });
 
@@ -90,7 +76,7 @@ class OrchestratorServiceTest {
 
     @Test
     void routeDelegatesToRouter() {
-        var plan = new OrchestratorPlan("chat", java.util.List.of(), null);
+        var plan = new OrchestratorPlan("chat", java.util.List.of(), null, false);
         when(router.route(org.mockito.ArgumentMatchers.any())).thenReturn(plan);
         var res = svc.route(new InternalRouteRequest("hi", java.util.List.of(), java.util.List.of("notion"), null));
         assertThat(res.mode()).isEqualTo("chat");
@@ -113,7 +99,7 @@ class OrchestratorServiceTest {
     void completeRunAppendsMessage() {
         var runId = UUID.randomUUID();
         runs.register(runId, conversationId);
-        svc.completeRun(runId, new RunCompleteRequest("completed", "done", null, null, null));
+        svc.completeRun(runId, new RunCompleteRequest("completed", "done", null, null, null, null));
         verify(conversations)
                 .appendAssistantMessage(conversationId, "done", "completed", null, null, null);
     }

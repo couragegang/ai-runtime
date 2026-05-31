@@ -1,12 +1,54 @@
 package com.couragegang.ai.service;
 
+import com.couragegang.ai.api.dto.OrchestratorDtos.PlanStep;
+import com.couragegang.ai.service.OrchestratorToolCatalog.ConnectorCapability;
 import com.couragegang.ai.service.OrchestratorToolCatalog.ToolDefinition;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 public final class HitlPromptFormatter {
 
     private HitlPromptFormatter() {}
+
+    public static String formatPlanApprovalRequired(
+            List<PlanStep> steps, String reasoning, List<ConnectorCapability> capabilities) {
+        var sb = new StringBuilder();
+        sb.append("**Требуется подтверждение плана действий**\n\n");
+        if (reasoning != null && !reasoning.isBlank()) {
+            sb.append(reasoning.strip()).append("\n\n");
+        }
+        sb.append("Будут выполнены шаги **в указанном порядке**:\n\n");
+        var idx = 1;
+        for (var step : steps) {
+            var label = step.label();
+            if (label == null || label.isBlank()) {
+                label = describeConnectorStep(step, capabilities);
+            }
+            sb.append(idx++).append(". **").append(label).append("**\n");
+        }
+        sb.append(
+                "\nНажмите **«Подтвердить план»**, чтобы начать выполнение, или **«Отклонить»**, чтобы отменить.");
+        return sb.toString();
+    }
+
+    private static String describeConnectorStep(PlanStep step, List<ConnectorCapability> capabilities) {
+        var key = step.connectorKey() != null ? step.connectorKey() : "connector";
+        var display =
+                capabilities.stream()
+                        .filter(c -> c.connectorKey().equals(key))
+                        .map(ConnectorCapability::displayName)
+                        .findFirst()
+                        .orElse(key);
+        if (step.toolName() != null && !step.toolName().isBlank()) {
+            return display + ": " + step.toolName();
+        }
+        if (step.task() != null && step.task().message() != null && !step.task().message().isBlank()) {
+            var msg = step.task().message().strip();
+            return display + ": " + (msg.length() > 120 ? msg.substring(0, 120) + "…" : msg);
+        }
+        return display;
+    }
 
     public static String formatApprovalRequired(
             ToolDefinition tool, Map<String, Object> arguments, int stepIndex, int totalSteps) {
@@ -43,6 +85,9 @@ public final class HitlPromptFormatter {
         var name = tool.toolName().toLowerCase(Locale.ROOT);
         if (name.contains("edit")) {
             return describeEditBlockAction(arguments);
+        }
+        if (name.contains("delete") || name.contains("remove") || name.contains("archive")) {
+            return describeDeletePageAction(arguments);
         }
         if (name.contains("write") || name.contains("create")) {
             var createNew = isTruthy(arguments, "create_new");
@@ -82,6 +127,24 @@ public final class HitlPromptFormatter {
                     + (query != null ? " по запросу: **" + query + "**" : ".");
         }
         return tool.description() + (arguments != null && !arguments.isEmpty() ? "\n\n" + formatArgs(arguments) : "");
+    }
+
+    private static String describeDeletePageAction(Map<String, Object> arguments) {
+        var pageTitle = firstNonBlank(arguments, "page_title", "target_page");
+        var pageRef = firstNonBlank(arguments, "page_id", "page_url");
+        var sb =
+                new StringBuilder(
+                        "Страница будет **перемещена в корзину** Notion (восстановление возможно из корзины в UI Notion).");
+        if (pageRef != null) {
+            if (pageRef.startsWith("http://") || pageRef.startsWith("https://")) {
+                sb.append("\n- **Страница:** [").append(pageRef).append("](").append(pageRef).append(")");
+            } else {
+                sb.append("\n- **Страница:** ").append(pageRef);
+            }
+        } else if (pageTitle != null) {
+            sb.append("\n- **Страница (поиск по названию):** ").append(pageTitle);
+        }
+        return sb.toString();
     }
 
     private static String describeEditBlockAction(Map<String, Object> arguments) {

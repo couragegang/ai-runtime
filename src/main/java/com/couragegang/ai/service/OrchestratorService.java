@@ -3,6 +3,7 @@ package com.couragegang.ai.service;
 import com.couragegang.ai.api.dto.ChatRequest;
 import com.couragegang.ai.api.dto.ChatResponse;
 import com.couragegang.ai.api.dto.ConversationDtos.MessageView;
+import com.couragegang.ai.api.dto.OrchestratorDtos.InternalHitlFormatPlanRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.InternalHitlFormatRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.InternalLlmCompleteRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.InternalLlmCompleteResponse;
@@ -161,6 +162,17 @@ public final class OrchestratorService {
 
     public OrchestratorPlan route(InternalRouteRequest request) {
         return router.route(request);
+    }
+
+    public String formatHitlPlanApproval(InternalHitlFormatPlanRequest request) {
+        var steps = request.steps() != null ? request.steps() : java.util.List.<com.couragegang.ai.api.dto.OrchestratorDtos.PlanStep>of();
+        var keys =
+                steps.stream()
+                        .map(com.couragegang.ai.api.dto.OrchestratorDtos.PlanStep::connectorKey)
+                        .filter(k -> k != null && !k.isBlank())
+                        .collect(java.util.stream.Collectors.toSet());
+        var capabilities = toolCatalog.connectorCapabilities(keys);
+        return HitlPromptFormatter.formatPlanApprovalRequired(steps, request.reasoning(), capabilities);
     }
 
     public String formatHitlApproval(InternalHitlFormatRequest request) {

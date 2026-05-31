@@ -26,7 +26,6 @@ public final class ChatService {
     private final ConversationService conversations;
     private final McpToolClient mcpTool;
     private final McpInstallationsClient mcpInstallations;
-    private final ToolIntentResolver toolIntent;
     private final OrchestratorService orchestrator;
 
     public ChatService(
@@ -36,7 +35,6 @@ public final class ChatService {
             ConversationService conversations,
             McpToolClient mcpTool,
             McpInstallationsClient mcpInstallations,
-            ToolIntentResolver toolIntent,
             OrchestratorService orchestrator) {
         this.policy = policy;
         this.llm = llm;
@@ -44,7 +42,6 @@ public final class ChatService {
         this.conversations = conversations;
         this.mcpTool = mcpTool;
         this.mcpInstallations = mcpInstallations;
-        this.toolIntent = toolIntent;
         this.orchestrator = orchestrator;
     }
 
@@ -326,7 +323,7 @@ public final class ChatService {
             var connector = request.connectorKey() != null ? request.connectorKey() : "notion";
             return Optional.of(new ResolvedTool(connector, explicitTool.trim()));
         }
-        return toolIntent.resolve(request.message(), activeConnectors);
+        return Optional.empty();
     }
 
     private static String buildToolContextMessage(List<ChatTurn> history) {
@@ -403,13 +400,9 @@ public final class ChatService {
         var sb = new StringBuilder("В workspace подключены интеграции: ");
         sb.append(String.join(", ", activeConnectors));
         sb.append(". ");
-        if (activeConnectors.contains("notion")) {
-            sb.append(
-                    "Для записи в Notion — notion_write_page (добавить текст или новую страницу). "
-                            + "Для замены фразы в существующем блоке — notion_edit_block (с подтверждением). "
-                            + "Для поиска и списка страниц — notion_search. "
-                            + "Никогда не выдумывай результаты поиска в Notion — если инструмент не вызывался, так и скажи. ");
-        }
+        sb.append(
+                "Действия во внешних системах выполняются через оркестратор и connector-workflow; "
+                        + "не называй конкретные MCP toolName и не выдумывай результаты интеграций. ");
         sb.append("Не обещай выполнить действие во внешней системе, если пользователь не просил об этом явно.");
         return sb.toString();
     }

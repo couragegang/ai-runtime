@@ -1,6 +1,7 @@
 package com.couragegang.ai.api;
 
 import com.couragegang.ai.api.dto.OrchestratorDtos.HitlFormatResponse;
+import com.couragegang.ai.api.dto.OrchestratorDtos.InternalHitlFormatPlanRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.InternalHitlFormatRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.InternalLlmCompleteRequest;
 import com.couragegang.ai.api.dto.OrchestratorDtos.InternalLlmCompleteResponse;
@@ -52,6 +53,11 @@ public class InternalOrchestratorController {
     @Post("/llm/route")
     public OrchestratorPlan route(@Body @Valid InternalRouteRequest body) {
         return orchestrator.route(body);
+    }
+
+    @Post("/hitl/format-plan-approval")
+    public HitlFormatResponse formatPlanApproval(@Body @Valid InternalHitlFormatPlanRequest body) {
+        return new HitlFormatResponse(orchestrator.formatHitlPlanApproval(body));
     }
 
     @Post("/hitl/format-approval")

@@ -28,6 +28,7 @@ public final class OrchestratorDtos {
             @NotBlank String status,
             @NotBlank String reply,
             @Nullable UUID pendingApprovalId,
+            @Nullable String approvalKind,
             @Nullable String toolName,
             @Nullable String connectorKey) {}
 
@@ -65,15 +66,33 @@ public final class OrchestratorDtos {
             @Nullable String knowledgeContext) {}
 
     @Serdeable
+    public record ConnectorTask(
+            @NotBlank String message,
+            @Nullable Map<String, Object> constraints,
+            @Nullable List<String> inputsFromPrior) {}
+
+    /** L1 connector step (ADR-003): task and/or explicit toolName for legacy tool_chain. */
+    @Serdeable
     public record PlanStep(
             @NotBlank String connectorKey,
-            @NotBlank String toolName,
+            @Nullable String toolName,
             @Nullable Map<String, Object> arguments,
-            @Nullable String label) {}
+            @Nullable ConnectorTask task,
+            @Nullable String label,
+            /** skipIf: priorFailed | priorOk:0 | priorConnector:notion.failed */
+            @Nullable String skipIf,
+            /** onFailure: continue | abort | skip_remaining */
+            @Nullable String onFailure) {}
 
     @Serdeable
     public record OrchestratorPlan(
             @NotBlank String mode,
+            @NotNull List<PlanStep> steps,
+            @Nullable String reasoning,
+            @Nullable Boolean requiresPlanApproval) {}
+
+    @Serdeable
+    public record InternalHitlFormatPlanRequest(
             @NotNull List<PlanStep> steps,
             @Nullable String reasoning) {}
 
