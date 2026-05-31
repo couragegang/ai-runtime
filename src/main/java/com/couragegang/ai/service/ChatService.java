@@ -279,12 +279,11 @@ public final class ChatService {
         if (toolMessage.isBlank()) {
             toolMessage = request.message();
         }
+        var toolArguments =
+                NotionToolArguments.forApproved(
+                        toolName, pending.toolArguments(), history, toolMessage);
         var invoked =
-                mcpTool.invoke(
-                        request.workspaceId(),
-                        connector,
-                        toolName,
-                        NotionToolArguments.forTool(toolName, history, toolMessage));
+                mcpTool.invoke(request.workspaceId(), connector, toolName, toolArguments);
         ChatResponse response;
         if (invoked.isEmpty()) {
             response =

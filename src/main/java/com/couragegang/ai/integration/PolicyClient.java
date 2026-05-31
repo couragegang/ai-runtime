@@ -104,12 +104,22 @@ public final class PolicyClient {
             if (toolName == null || toolName.isBlank()) {
                 return Optional.empty();
             }
+            Map<String, Object> toolArguments = Map.of();
+            var argsNode = node.path("toolArguments");
+            if (argsNode.isObject()) {
+                @SuppressWarnings("unchecked")
+                var parsed = (Map<String, Object>) json.convertValue(argsNode, Map.class);
+                if (parsed != null) {
+                    toolArguments = parsed;
+                }
+            }
             return Optional.of(
                     new PendingApprovalInfo(
                             pendingId,
                             node.path("status").asText("pending"),
                             toolName,
-                            node.path("workspaceId").asText(null)));
+                            node.path("workspaceId").asText(null),
+                            toolArguments));
         } catch (Exception e) {
             LOG.warn("policy get pending error: {}", e.toString());
             return Optional.empty();
@@ -118,5 +128,6 @@ public final class PolicyClient {
 
     public record EvaluateResult(String decision, UUID pendingApprovalId) {}
 
-    public record PendingApprovalInfo(UUID id, String status, String toolName, String workspaceId) {}
+    public record PendingApprovalInfo(
+            UUID id, String status, String toolName, String workspaceId, Map<String, Object> toolArguments) {}
 }

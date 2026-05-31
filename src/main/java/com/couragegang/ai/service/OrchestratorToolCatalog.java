@@ -42,7 +42,7 @@ public final class OrchestratorToolCatalog {
                                     "Notion",
                                     "notion_write_page",
                                     "Запись страницы",
-                                    "Создаёт или обновляет страницу в Notion (может потребовать подтверждения политикой).",
+                                    "Создаёт новую страницу или добавляет текст на существующую (по page_title/page_url; create_new=true только для новой).",
                                     true));
                 }
                 default -> {}

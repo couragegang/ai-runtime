@@ -42,15 +42,34 @@ public final class HitlPromptFormatter {
         }
         var name = tool.toolName().toLowerCase(Locale.ROOT);
         if (name.contains("write") || name.contains("create")) {
+            var createNew = isTruthy(arguments, "create_new");
+            var pageTitle = firstNonBlank(arguments, "page_title", "target_page");
+            var pageRef = firstNonBlank(arguments, "page_id", "page_url");
             var title = stringArg(arguments, "title");
             var content = firstNonBlank(arguments, "content", "message");
-            var sb = new StringBuilder("Будет создана или обновлена страница в Notion.");
-            if (title != null) {
-                sb.append("\n- **Заголовок:** ").append(title);
+            var sb = new StringBuilder();
+            if (createNew) {
+                sb.append("Будет **создана новая** страница в Notion.");
+                if (title != null) {
+                    sb.append("\n- **Заголовок:** ").append(title);
+                }
+            } else {
+                sb.append("Будет **добавлен текст** на существующую страницу Notion.");
+                if (pageRef != null) {
+                    if (pageRef.startsWith("http://") || pageRef.startsWith("https://")) {
+                        sb.append("\n- **Страница:** [").append(pageRef).append("](").append(pageRef).append(")");
+                    } else {
+                        sb.append("\n- **Страница:** ").append(pageRef);
+                    }
+                } else if (pageTitle != null) {
+                    sb.append("\n- **Страница (поиск по названию):** ").append(pageTitle);
+                } else if (title != null) {
+                    sb.append("\n- **Страница (поиск по названию):** ").append(title);
+                }
             }
             if (content != null) {
                 var preview = content.length() > 400 ? content.substring(0, 400) + "…" : content;
-                sb.append("\n- **Содержимое:** ").append(preview);
+                sb.append("\n- **Текст:** ").append(preview);
             }
             return sb.toString();
         }
@@ -92,5 +111,20 @@ public final class HitlPromptFormatter {
             }
         }
         return null;
+    }
+
+    private static boolean isTruthy(Map<String, Object> args, String key) {
+        if (args == null) {
+            return false;
+        }
+        var v = args.get(key);
+        if (v instanceof Boolean b) {
+            return b;
+        }
+        if (v == null) {
+            return false;
+        }
+        var s = String.valueOf(v).trim().toLowerCase(Locale.ROOT);
+        return "true".equals(s) || "1".equals(s);
     }
 }

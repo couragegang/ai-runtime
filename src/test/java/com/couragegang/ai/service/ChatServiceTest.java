@@ -124,13 +124,52 @@ class ChatServiceTest {
     }
 
     @Test
+    void executeAfterApprovalUsesStoredToolArguments() {
+        var pendingId = UUID.randomUUID();
+        var storedArgs =
+                Map.<String, Object>of(
+                        "title", "Обед",
+                        "content", "Пельмени — было вкусно",
+                        "message", "Пельмени — было вкусно");
+        when(policy.getPendingApproval(pendingId))
+                .thenReturn(
+                        Optional.of(
+                                new PendingApprovalInfo(
+                                        pendingId,
+                                        "approved",
+                                        "notion_write_page",
+                                        wsId.toString(),
+                                        storedArgs)));
+        when(conversations.historyForLlm(conversationId, 30))
+                .thenReturn(
+                        List.of(
+                                new ChatTurn("user", "запиши в notion"),
+                                new ChatTurn("assistant", "нужно подтверждение")));
+        when(mcpTool.invoke(eq(wsId), eq("notion"), eq("notion_write_page"), eq(storedArgs)))
+                .thenReturn(Optional.of(InvokeResult.success("Готово: страница создана")));
+        var res =
+                svc.chat(
+                        new ChatRequest(
+                                orgId,
+                                wsId,
+                                UUID.randomUUID(),
+                                conversationId,
+                                "подтверждаю",
+                                "notion",
+                                "notion_write_page",
+                                pendingId));
+        assertThat(res.status()).isEqualTo("completed");
+        verify(mcpTool).invoke(eq(wsId), eq("notion"), eq("notion_write_page"), eq(storedArgs));
+    }
+
+    @Test
     void executeAfterApprovalRunsTool() {
         var pendingId = UUID.randomUUID();
         when(policy.getPendingApproval(pendingId))
                 .thenReturn(
                         Optional.of(
                                 new PendingApprovalInfo(
-                                        pendingId, "approved", "notion_write_page", wsId.toString())));
+                                        pendingId, "approved", "notion_write_page", wsId.toString(), Map.of())));
         when(conversations.historyForLlm(conversationId, 30))
                 .thenReturn(
                         List.of(

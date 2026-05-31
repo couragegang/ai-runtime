@@ -78,6 +78,15 @@ public final class OrchestratorRouterService {
                 - Never invent connectorKey or toolName.
                 - arguments must match the user intent (query for search, title/content for write).
                 - Do not claim tools ran; only plan them.
+                - Notion notion_write_page arguments:
+                  * content (required for write): text to add to a page
+                  * create_new (boolean): true ONLY if the user explicitly asks to create a NEW page/note
+                  * page_title: hint to find an EXISTING page by title (when updating/appending)
+                  * page_id or page_url: exact target page when known (e.g. from a prior search step)
+                  * title: title for a NEW page only when create_new=true
+                - Default for write is UPDATE/APPEND to an existing page (create_new=false).
+                - When the target page is unclear, plan notion_search first, then notion_write_page with page_title or page_url from results.
+                - Do NOT set create_new=true for "add to page", "update", "append", "write to my notes" unless user asked for a new page.
 
                 Available tools:
                 """);

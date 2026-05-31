@@ -20,10 +20,13 @@ class HitlPromptFormatterTest {
                         true);
         var msg =
                 HitlPromptFormatter.formatApprovalRequired(
-                        tool, Map.of("title", "Идеи", "content", "Текст заметки"), 1, 2);
+                        tool,
+                        Map.of("page_title", "Roadmap", "content", "Текст заметки"),
+                        1,
+                        2);
         assertThat(msg).contains("Требуется ваше решение");
-        assertThat(msg).contains("Notion");
-        assertThat(msg).contains("Идеи");
+        assertThat(msg).contains("добавлен текст");
+        assertThat(msg).contains("Roadmap");
         assertThat(msg).contains("Подтвердить");
     }
 }
