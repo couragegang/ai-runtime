@@ -11,6 +11,20 @@ class ToolIntentResolverCoverageTest {
     private final ToolIntentResolver resolver = new ToolIntentResolver();
 
     @Test
+    void editBlockBranches() {
+        assertThat(resolver.resolve("замени old на new", Set.of("notion")).orElseThrow().toolName())
+                .isEqualTo("notion_edit_block");
+        assertThat(resolver.resolve("исправь текст в notion", Set.of("notion")).orElseThrow().toolName())
+                .isEqualTo("notion_edit_block");
+        assertThat(resolver.resolve("replace foo with bar in notion", Set.of("notion")).orElseThrow().toolName())
+                .isEqualTo("notion_edit_block");
+        assertThat(resolver.resolve("измени фразу old на new", Set.of("notion")).orElseThrow().toolName())
+                .isEqualTo("notion_edit_block");
+        assertThat(resolver.resolve("поменяй X на Y в notion", Set.of("notion")).orElseThrow().toolName())
+                .isEqualTo("notion_edit_block");
+    }
+
+    @Test
     void writeBranches() {
         assertThat(resolver.resolve("добавь в notion", Set.of("notion"))).isPresent();
         assertThat(resolver.resolve("write notion page", Set.of("notion"))).isPresent();

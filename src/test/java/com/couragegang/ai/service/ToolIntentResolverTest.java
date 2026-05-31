@@ -10,6 +10,15 @@ class ToolIntentResolverTest {
     private final ToolIntentResolver resolver = new ToolIntentResolver();
 
     @Test
+    void editIntentBeforeWriteIntent() {
+        assertThat(
+                        resolver.resolve("замени в notion фразу old на new", Set.of("notion"))
+                                .orElseThrow()
+                                .toolName())
+                .isEqualTo("notion_edit_block");
+    }
+
+    @Test
     void detectsEditBlockReplace() {
         assertThat(
                         resolver.resolve(
