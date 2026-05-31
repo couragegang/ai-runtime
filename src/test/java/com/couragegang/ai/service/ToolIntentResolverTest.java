@@ -10,6 +10,17 @@ class ToolIntentResolverTest {
     private final ToolIntentResolver resolver = new ToolIntentResolver();
 
     @Test
+    void detectsEditBlockReplace() {
+        assertThat(
+                        resolver.resolve(
+                                        "Замени на странице Ideas фразу было вкусно на очень вкусно",
+                                        Set.of("notion"))
+                                .orElseThrow()
+                                .toolName())
+                .isEqualTo("notion_edit_block");
+    }
+
+    @Test
     void detectsNotionWrite() {
         var r = resolver.resolve("сохрани это в notion", Set.of("notion"));
         assertThat(r).isPresent();

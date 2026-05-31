@@ -33,6 +33,7 @@ class OrchestratorServiceTest {
     @Mock LlmService llm;
     @Mock OrchestratorRouterService router;
     @Mock OrchestratorToolCatalog toolCatalog;
+    @Mock NotionEditPreviewEnricher notionEditPreview;
 
     OrchestratorRunRegistry runs;
     OrchestratorService svc;
@@ -44,7 +45,9 @@ class OrchestratorServiceTest {
     @BeforeEach
     void setUp() {
         runs = new OrchestratorRunRegistry();
-        svc = new OrchestratorService("n8n", 5, n8n, conversations, runs, llm, router, toolCatalog);
+        svc =
+                new OrchestratorService(
+                        "n8n", 5, n8n, conversations, runs, llm, router, toolCatalog, notionEditPreview);
         executor = Executors.newSingleThreadExecutor();
         lenient().when(n8n.isEnabled()).thenReturn(true);
     }
@@ -101,7 +104,8 @@ class OrchestratorServiceTest {
                                 "notion", "Notion", "notion_write_page", "Запись", "d", true));
         var msg =
                 svc.formatHitlApproval(
-                        new InternalHitlFormatRequest("notion", "notion_write_page", java.util.Map.of(), 1, 1));
+                        new InternalHitlFormatRequest(
+                                "notion", "notion_write_page", java.util.Map.of(), 1, 1, wsId));
         assertThat(msg).contains("Подтвердить");
     }
 

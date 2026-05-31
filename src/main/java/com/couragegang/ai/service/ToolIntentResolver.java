@@ -25,6 +25,9 @@ public final class ToolIntentResolver {
         if (matchesListIntent(lower) || matchesSearchIntent(lower) || matchesSearchFollowUp(lower)) {
             return Optional.of(new ResolvedTool("notion", "notion_search"));
         }
+        if (matchesEditBlockIntent(lower)) {
+            return Optional.of(new ResolvedTool("notion", "notion_edit_block"));
+        }
         if (matchesWriteIntent(lower)) {
             return Optional.of(new ResolvedTool("notion", "notion_write_page"));
         }
@@ -33,6 +36,16 @@ public final class ToolIntentResolver {
 
     private static boolean mentionsNotion(String lower) {
         return lower.contains("notion") || lower.contains("ноушен") || lower.contains("ношен");
+    }
+
+    private static boolean matchesEditBlockIntent(String lower) {
+        return lower.contains("замени")
+                || lower.contains("исправ")
+                || lower.contains("отредакт")
+                || lower.contains("поменяй")
+                || lower.contains("replace")
+                || (lower.contains("измени") && (lower.contains("фраз") || lower.contains("текст") || lower.contains("на ")))
+                || (lower.contains("change") && lower.contains("to"));
     }
 
     private static boolean matchesWriteIntent(String lower) {

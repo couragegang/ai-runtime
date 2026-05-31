@@ -87,6 +87,13 @@ public final class OrchestratorRouterService {
                 - Default for write is UPDATE/APPEND to an existing page (create_new=false).
                 - When the target page is unclear, plan notion_search first, then notion_write_page with page_title or page_url from results.
                 - Do NOT set create_new=true for "add to page", "update", "append", "write to my notes" unless user asked for a new page.
+                - Notion notion_edit_block: replace a phrase inside an existing block (NOT append). Arguments:
+                  * find_text: exact phrase to find on the page
+                  * new_text: replacement phrase
+                  * page_title / page_url / page_id: target page
+                  * block_id: optional when multiple blocks match
+                - Use notion_edit_block for "replace X with Y", "fix phrase", "change text on page".
+                - Use notion_write_page for adding new paragraphs at the end.
 
                 Available tools:
                 """);

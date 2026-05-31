@@ -44,6 +44,14 @@ public final class OrchestratorToolCatalog {
                                     "Запись страницы",
                                     "Создаёт новую страницу или добавляет текст на существующую (по page_title/page_url; create_new=true только для новой).",
                                     true));
+                    out.add(
+                            new ToolDefinition(
+                                    "notion",
+                                    "Notion",
+                                    "notion_edit_block",
+                                    "Правка блока",
+                                    "Заменяет фразу в существующем текстовом блоке страницы (find_text → new_text; page_title/page_url).",
+                                    true));
                 }
                 default -> {}
             }

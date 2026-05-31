@@ -74,7 +74,7 @@ class ChatServiceTest {
         stubLlm(wsId.toString(), "hi");
         var res = svc.chat(new ChatRequest(null, wsId, null, null, "hi", null, null, null));
         assertThat(res.status()).isEqualTo("stub");
-        verify(policy, never()).evaluate(any(), any(), any(), any(), any());
+        verify(policy, never()).evaluate(any(), any(), any(), any(), any(), any());
         verify(audit, never()).emitChatEvent(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
@@ -83,13 +83,13 @@ class ChatServiceTest {
         stubLlm(wsId.toString(), "hi");
         var res = svc.chat(new ChatRequest(null, wsId, null, null, "hi", "notion", "write_page", null));
         assertThat(res.status()).isEqualTo("stub");
-        verify(policy, never()).evaluate(any(), any(), any(), any(), any());
+        verify(policy, never()).evaluate(any(), any(), any(), any(), any(), any());
     }
 
     @Test
     void awaitingApprovalWhenPolicyRequires() {
         var pendingId = UUID.randomUUID();
-        when(policy.evaluate(any(), any(), any(), any(), any()))
+        when(policy.evaluate(any(), any(), any(), any(), any(), any()))
                 .thenReturn(Optional.of(new EvaluateResult("require_approval", pendingId)));
         var res =
                 svc.chat(
@@ -110,7 +110,7 @@ class ChatServiceTest {
 
     @Test
     void invokesMcpWhenPolicyAllows() {
-        when(policy.evaluate(eq(orgId), eq(wsId), eq("notion"), eq("notion_write_page"), any()))
+        when(policy.evaluate(eq(orgId), eq(wsId), eq("notion"), eq("notion_write_page"), any(), any()))
                 .thenReturn(Optional.of(new EvaluateResult("allow", null)));
         when(mcpTool.invoke(eq(wsId), eq("notion"), eq("notion_write_page"), any()))
                 .thenReturn(Optional.of(InvokeResult.success("Страница создана")));

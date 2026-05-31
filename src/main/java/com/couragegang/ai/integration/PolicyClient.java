@@ -44,7 +44,12 @@ public final class PolicyClient {
     }
 
     public Optional<EvaluateResult> evaluate(
-            UUID orgId, UUID workspaceId, String connectorKey, String toolName, UUID userId) {
+            UUID orgId,
+            UUID workspaceId,
+            String connectorKey,
+            String toolName,
+            UUID userId,
+            Map<String, Object> toolArguments) {
         if (!enabled) {
             return Optional.of(new EvaluateResult("allow", null));
         }
@@ -54,7 +59,9 @@ public final class PolicyClient {
             bodyNode.put("workspaceId", workspaceId.toString());
             bodyNode.put("connectorKey", connectorKey);
             bodyNode.put("toolName", toolName);
-            bodyNode.set("toolArguments", json.createObjectNode());
+            bodyNode.set(
+                    "toolArguments",
+                    json.valueToTree(toolArguments != null ? toolArguments : Map.of()));
             if (userId != null) {
                 bodyNode.put("userId", userId.toString());
             }

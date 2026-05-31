@@ -85,7 +85,8 @@ public final class ChatService {
         var resolvedTool = resolveTool(request, activeConnectors);
         if (resolvedTool.isPresent() && request.orgId() != null) {
             var tool = resolvedTool.get();
-            var policyOutcome = evaluatePolicy(request, tool.connectorKey(), tool.toolName());
+            var policyOutcome =
+                    evaluatePolicy(request, tool.connectorKey(), tool.toolName(), history, toolContextMessage);
             if (policyOutcome.awaitingApproval()) {
                 var response =
                         new ChatResponse(
@@ -189,7 +190,8 @@ public final class ChatService {
                 && request.orgId() != null
                 && request.workspaceId() != null) {
             var connector = request.connectorKey() != null ? request.connectorKey() : "notion";
-            var policyOutcome = evaluatePolicy(request, connector, toolName);
+            var policyOutcome =
+                    evaluatePolicy(request, connector, toolName, List.of(), request.message());
             if (policyOutcome.awaitingApproval()) {
                 var response =
                         new ChatResponse(
@@ -353,8 +355,21 @@ public final class ChatService {
         return sb.toString();
     }
 
-    private PolicyOutcome evaluatePolicy(ChatRequest request, String connectorKey, String toolName) {
-        var eval = policy.evaluate(request.orgId(), request.workspaceId(), connectorKey, toolName, request.userId());
+    private PolicyOutcome evaluatePolicy(
+            ChatRequest request,
+            String connectorKey,
+            String toolName,
+            List<ChatTurn> history,
+            String toolContextMessage) {
+        var toolArguments = NotionToolArguments.forTool(toolName, history, toolContextMessage);
+        var eval =
+                policy.evaluate(
+                        request.orgId(),
+                        request.workspaceId(),
+                        connectorKey,
+                        toolName,
+                        request.userId(),
+                        toolArguments);
         if (eval.isEmpty()) {
             return PolicyOutcome.allow();
         }
@@ -390,8 +405,8 @@ public final class ChatService {
         sb.append(". ");
         if (activeConnectors.contains("notion")) {
             sb.append(
-                    "Для записи в Notion пользователь должен явно попросить сохранить/создать страницу — тогда"
-                            + " сработает notion_write_page (может потребоваться подтверждение). "
+                    "Для записи в Notion — notion_write_page (добавить текст или новую страницу). "
+                            + "Для замены фразы в существующем блоке — notion_edit_block (с подтверждением). "
                             + "Для поиска и списка страниц — notion_search. "
                             + "Никогда не выдумывай результаты поиска в Notion — если инструмент не вызывался, так и скажи. ");
         }

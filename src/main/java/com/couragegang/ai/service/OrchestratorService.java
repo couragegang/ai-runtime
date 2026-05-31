@@ -35,6 +35,7 @@ public final class OrchestratorService {
     private final LlmService llm;
     private final OrchestratorRouterService router;
     private final OrchestratorToolCatalog toolCatalog;
+    private final NotionEditPreviewEnricher notionEditPreview;
 
     public OrchestratorService(
             @Value("${ai.orchestrator:legacy}") String orchestratorMode,
@@ -44,7 +45,8 @@ public final class OrchestratorService {
             OrchestratorRunRegistry runs,
             LlmService llm,
             OrchestratorRouterService router,
-            OrchestratorToolCatalog toolCatalog) {
+            OrchestratorToolCatalog toolCatalog,
+            NotionEditPreviewEnricher notionEditPreview) {
         this.orchestratorMode = orchestratorMode != null ? orchestratorMode.trim().toLowerCase() : "legacy";
         this.waitTimeoutSeconds = waitTimeoutSeconds;
         this.n8n = n8n;
@@ -53,6 +55,7 @@ public final class OrchestratorService {
         this.llm = llm;
         this.router = router;
         this.toolCatalog = toolCatalog;
+        this.notionEditPreview = notionEditPreview;
     }
 
     @PostConstruct
@@ -162,9 +165,12 @@ public final class OrchestratorService {
 
     public String formatHitlApproval(InternalHitlFormatRequest request) {
         var tool = toolCatalog.find(request.connectorKey(), request.toolName());
+        var args =
+                notionEditPreview.enrichForHitl(
+                        request.workspaceId(), request.toolName(), request.arguments());
         return HitlPromptFormatter.formatApprovalRequired(
                 tool,
-                request.arguments(),
+                args,
                 Math.max(request.stepIndex(), 1),
                 Math.max(request.totalSteps(), 1));
     }

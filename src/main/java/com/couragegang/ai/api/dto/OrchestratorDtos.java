@@ -83,7 +83,8 @@ public final class OrchestratorDtos {
             @NotBlank String toolName,
             @Nullable Map<String, Object> arguments,
             int stepIndex,
-            int totalSteps) {}
+            int totalSteps,
+            @Nullable UUID workspaceId) {}
 
     @Serdeable
     public record HitlFormatResponse(@NotBlank String message) {}

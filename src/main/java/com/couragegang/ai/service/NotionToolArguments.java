@@ -13,6 +13,9 @@ final class NotionToolArguments {
 
     static Map<String, Object> forTool(String toolName, List<ChatTurn> history, String contextFallback) {
         var normalized = toolName != null ? toolName.toLowerCase(Locale.ROOT) : "";
+        if (normalized.contains("edit")) {
+            return forEditBlock(history, contextFallback);
+        }
         if (normalized.contains("write") || normalized.contains("create")) {
             return forWrite(history, contextFallback);
         }
@@ -33,10 +36,57 @@ final class NotionToolArguments {
 
     private static boolean hasStoredPayload(String toolName, Map<String, Object> stored) {
         var normalized = toolName != null ? toolName.toLowerCase(Locale.ROOT) : "";
+        if (normalized.contains("edit")) {
+            return firstNonBlank(stored, "find_text", "old_text", "new_text", "replace_with") != null;
+        }
         if (normalized.contains("write") || normalized.contains("create")) {
             return firstNonBlank(stored, "content", "message", "title") != null;
         }
         return firstNonBlank(stored, "query", "q", "content", "message") != null;
+    }
+
+    private static Map<String, Object> forEditBlock(List<ChatTurn> history, String contextFallback) {
+        var lastUser = lastUserContent(history);
+        var source = lastUser != null && !lastUser.isBlank() ? lastUser : contextFallback;
+        var replacement = extractReplacePair(source);
+        var args = new LinkedHashMap<String, Object>();
+        if (replacement != null) {
+            args.put("find_text", replacement.oldText());
+            args.put("new_text", replacement.newText());
+            args.put("replace_with", replacement.newText());
+        }
+        var pageTitle = extractPageTargetHint(source);
+        if (pageTitle != null) {
+            args.put("page_title", pageTitle);
+        }
+        return args;
+    }
+
+    private record ReplacePair(String oldText, String newText) {}
+
+    private static ReplacePair extractReplacePair(String message) {
+        if (message == null || message.isBlank()) {
+            return null;
+        }
+        var patterns =
+                List.of(
+                        Pattern.compile(
+                                "(?:замени|поменяй|исправь|измени)(?:\\s+фразу)?\\s+[«\"']?(.+?)[«\"']?\\s+на\\s+[«\"']?(.+?)[«\"']?\\s*$",
+                                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE),
+                        Pattern.compile(
+                                "replace\\s+[«\"']?(.+?)[«\"']?\\s+with\\s+[«\"']?(.+?)[«\"']?\\s*$",
+                                Pattern.CASE_INSENSITIVE));
+        for (var pattern : patterns) {
+            var matcher = pattern.matcher(message.strip());
+            if (matcher.find()) {
+                var oldText = matcher.group(1).strip();
+                var newText = matcher.group(2).strip();
+                if (!oldText.isBlank() && !newText.isBlank()) {
+                    return new ReplacePair(oldText, newText);
+                }
+            }
+        }
+        return null;
     }
 
     private static String firstNonBlank(Map<String, Object> args, String... keys) {
@@ -99,7 +149,13 @@ final class NotionToolArguments {
         var patterns =
                 List.of(
                         Pattern.compile(
+                                "(?:на|в)\\s+страниц(?:у|е)\\s+([\\p{L}\\p{N}_«\"'\\-]+?)(?=\\s+(?:замени|добавь|запиши|допиши|исправь|измени|поменяй)|\\s*$)",
+                                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE),
+                        Pattern.compile(
                                 "(?:на|в)\\s+страниц(?:у|е)\\s+[«\"']?([^«\"'\\n,.:;]+)",
+                                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE),
+                        Pattern.compile(
+                                "(?:добавь|запиши|допиши|обнови|внеси|замени|исправь|измени|поменяй)\\s+(?:в|на)\\s+страниц(?:у|е)\\s+[«\"']?([^«\"'\\n,.:;]+)",
                                 Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE),
                         Pattern.compile(
                                 "(?:добавь|запиши|допиши|обнови|внеси)\\s+(?:в|на)\\s+[«\"']?([^«\"'\\n,.:;]+)",

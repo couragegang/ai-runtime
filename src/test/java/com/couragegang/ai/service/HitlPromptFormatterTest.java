@@ -29,4 +29,31 @@ class HitlPromptFormatterTest {
         assertThat(msg).contains("Roadmap");
         assertThat(msg).contains("Подтвердить");
     }
+
+    @Test
+    void formatsEditBlockApprovalWithBeforeAfter() {
+        var tool =
+                new ToolDefinition(
+                        "notion",
+                        "Notion",
+                        "notion_edit_block",
+                        "Правка блока",
+                        "desc",
+                        true);
+        var msg =
+                HitlPromptFormatter.formatApprovalRequired(
+                        tool,
+                        Map.of(
+                                "page_title",
+                                "Ideas",
+                                "block_before",
+                                "Пельмени — было вкусно",
+                                "block_after",
+                                "Пельмени — очень вкусно"),
+                        1,
+                        1);
+        assertThat(msg).contains("изменён фрагмент");
+        assertThat(msg).contains("было вкусно");
+        assertThat(msg).contains("очень вкусно");
+    }
 }

@@ -41,6 +41,9 @@ public final class HitlPromptFormatter {
             return formatArgs(arguments);
         }
         var name = tool.toolName().toLowerCase(Locale.ROOT);
+        if (name.contains("edit")) {
+            return describeEditBlockAction(arguments);
+        }
         if (name.contains("write") || name.contains("create")) {
             var createNew = isTruthy(arguments, "create_new");
             var pageTitle = firstNonBlank(arguments, "page_title", "target_page");
@@ -79,6 +82,41 @@ public final class HitlPromptFormatter {
                     + (query != null ? " по запросу: **" + query + "**" : ".");
         }
         return tool.description() + (arguments != null && !arguments.isEmpty() ? "\n\n" + formatArgs(arguments) : "");
+    }
+
+    private static String describeEditBlockAction(Map<String, Object> arguments) {
+        var pageTitle = firstNonBlank(arguments, "page_title", "target_page");
+        var pageRef = firstNonBlank(arguments, "page_id", "page_url");
+        var findText = firstNonBlank(arguments, "find_text", "old_text", "search_text");
+        var newText = firstNonBlank(arguments, "new_text", "replace_with", "replacement", "content");
+        var before = firstNonBlank(arguments, "block_before");
+        var after = firstNonBlank(arguments, "block_after");
+        var sb = new StringBuilder("Будет **изменён фрагмент** в блоке на странице Notion.");
+        if (pageRef != null) {
+            if (pageRef.startsWith("http://") || pageRef.startsWith("https://")) {
+                sb.append("\n- **Страница:** [").append(pageRef).append("](").append(pageRef).append(")");
+            } else {
+                sb.append("\n- **Страница:** ").append(pageRef);
+            }
+        } else if (pageTitle != null) {
+            sb.append("\n- **Страница (поиск по названию):** ").append(pageTitle);
+        }
+        if (before != null && after != null) {
+            sb.append("\n- **Было:** ").append(truncatePreview(before));
+            sb.append("\n- **Станет:** ").append(truncatePreview(after));
+        } else {
+            if (findText != null) {
+                sb.append("\n- **Найти фразу:** ").append(truncatePreview(findText));
+            }
+            if (newText != null) {
+                sb.append("\n- **Заменить на:** ").append(truncatePreview(newText));
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String truncatePreview(String s) {
+        return s.length() > 400 ? s.substring(0, 400) + "…" : s;
     }
 
     private static String formatArgs(Map<String, Object> arguments) {

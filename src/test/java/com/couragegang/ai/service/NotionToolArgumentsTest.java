@@ -51,6 +51,21 @@ class NotionToolArgumentsTest {
     }
 
     @Test
+    void editExtractsReplacePairAndPageHint() {
+        var args =
+                NotionToolArguments.forTool(
+                        "notion_edit_block",
+                        List.of(
+                                new ChatTurn(
+                                        "user",
+                                        "На странице Ideas замени фразу было вкусно на очень вкусно")),
+                        null);
+        assertThat(args.get("find_text")).isEqualTo("было вкусно");
+        assertThat(args.get("new_text")).isEqualTo("очень вкусно");
+        assertThat(args.get("page_title")).isEqualTo("Ideas");
+    }
+
+    @Test
     void searchUsesLastUserQuery() {
         var args =
                 NotionToolArguments.forTool(
